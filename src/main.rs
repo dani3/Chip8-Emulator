@@ -4,18 +4,19 @@ mod core;
 
 use crate::core::Processor;
 use crate::core::GraphicsDriver;
+use crate::core::InputDrivers;
 
 fn main() {
-    let processor = Processor::new();
-
     let sdl_context = sdl2::init().unwrap();
 
-    let graphics_drivers = GraphicsDriver::new(&sdl_context);
+    // Initialize graphics drivers
+    let mut graphics_drivers = GraphicsDriver::new(&sdl_context);
+    // Initialize the input drivers
+    let mut input_drivers = InputDrivers::new(&sdl_context);
+    // Create the processor
+    let mut processor = Processor::new();
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
-    loop {
-        for _event in event_pump.poll_iter() {
-            // handle user input here
-        }
+    while let Ok(keypad) = input_drivers.poll() {
+
     }
 }
