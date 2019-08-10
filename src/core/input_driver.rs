@@ -15,13 +15,13 @@ use sdl2::keyboard::Keycode;
 // |A|0|B|F|                |Z|X|C|V|
 // +-+-+-+-+                +-+-+-+-+
 
-pub struct InputDrivers {
+pub struct InputDriver {
     event_pump: sdl2::EventPump
 }
 
-impl InputDrivers {
+impl InputDriver {
     pub fn new(sdl_context: &sdl2::Sdl) -> Self {
-        InputDrivers {
+        InputDriver {
             event_pump: sdl_context.event_pump().unwrap()
         }
     }

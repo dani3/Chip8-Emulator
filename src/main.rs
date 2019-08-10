@@ -4,7 +4,7 @@ mod core;
 
 use crate::core::Processor;
 use crate::core::GraphicsDriver;
-use crate::core::InputDrivers;
+use crate::core::InputDriver;
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -12,7 +12,7 @@ fn main() {
     // Initialize graphics drivers
     let mut graphics_drivers = GraphicsDriver::new(&sdl_context);
     // Initialize the input drivers
-    let mut input_drivers = InputDrivers::new(&sdl_context);
+    let mut input_drivers = InputDriver::new(&sdl_context);
     // Create the VM
     let mut processor = Processor::new();
 

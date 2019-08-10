@@ -10,4 +10,4 @@ pub use self::fontset::FONTSET;
 
 pub use self::processor::Processor;
 pub use self::graphics_drivers::GraphicsDriver;
-pub use self::input_drivers::InputDrivers;
+pub use self::input_drivers::InputDriver;
