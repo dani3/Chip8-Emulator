@@ -1,16 +1,17 @@
 use crate::core::CHIP8_HEIGHT;
 use crate::core::CHIP8_WIDTH;
+use crate::core::FONTSET;
 
 const MEMORY_SIZE:            usize = 4096;
 const STACK_SIZE:             usize = 16;
 const KEYPAD_SIZE:            usize = 16;
 const NUM_REGISTERS:          usize = 16;
-const INTERPRETER_AREA_START:   u16 = 0x000;
-const INTERPRETER_AREA_END:     u16 = 0x1ff;
-const FONT_AREA_START:          u16 = 0x050;
-const FONT_AREA_END:            u16 = 0x0a0;
-const PROGRAM_AREA_START:       u16 = 0x200;
-const PROGRAM_AREA_END:         u16 = 0xfff;
+const INTERPRETER_AREA_START: u16   = 0x000;
+const INTERPRETER_AREA_END:   u16   = 0x1ff;
+const FONT_AREA_START:        u16   = 0x050;
+const FONT_AREA_END:          u16   = 0x0a0;
+const PROGRAM_AREA_START:     u16   = 0x200;
+const PROGRAM_AREA_END:       u16   = 0xfff;
 
 pub struct Processor {
     // System memory map
@@ -42,16 +43,27 @@ pub struct Processor {
 
 impl Processor {
     pub fn new() -> Self {
+        let mut memory: [u8; MEMORY_SIZE] = [0xff; MEMORY_SIZE];
+        memory[..80].copy_from_slice(&FONTSET);
+
         Processor {
-            memory: [0xff; MEMORY_SIZE],
+            // Clear memory
+            memory,
+            // Clear stack
             stack: [0xff; STACK_SIZE],
             sp: 0,
             keypad: [false; KEYPAD_SIZE],
+            // Cleary display
             vram: [0x00; CHIP8_WIDTH * CHIP8_HEIGHT],
+            // Clear registers
             V: [0x00; NUM_REGISTERS],
+            // Clear index
             I: 0,
-            pc: 0,
+            // Program counter starts at 0x200
+            pc: 0x200,
+            // Reset OpCode
             op_code: 0,
+            // Reset timers
             delay_timer: 0,
             sound_timer: 0
         }

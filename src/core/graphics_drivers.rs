@@ -34,8 +34,4 @@ impl GraphicsDriver {
             canvas
         }
     }
-
-    pub fn draw(sdl_context: &Sdl) {
-
-    }
 }
