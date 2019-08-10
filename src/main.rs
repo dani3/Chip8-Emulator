@@ -13,9 +13,10 @@ fn main() {
     let mut graphics_drivers = GraphicsDriver::new(&sdl_context);
     // Initialize the input drivers
     let mut input_drivers = InputDrivers::new(&sdl_context);
-    // Create the processor
+    // Create the VM
     let mut processor = Processor::new();
 
+    // VM loop
     while let Ok(keypad) = input_drivers.poll() {
 
     }
