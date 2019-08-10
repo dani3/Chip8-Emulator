@@ -1,9 +1,10 @@
+use crate::core::CHIP8_HEIGHT;
+use crate::core::CHIP8_WIDTH;
+
 const MEMORY_SIZE:            usize = 4096;
 const STACK_SIZE:             usize = 16;
 const KEYPAD_SIZE:            usize = 16;
 const NUM_REGISTERS:          usize = 16;
-const SCREEN_WIDTH:           usize = 64;
-const SCREEN_HEIGHT:          usize = 32;
 const INTERPRETER_AREA_START:   u16 = 0x000;
 const INTERPRETER_AREA_END:     u16 = 0x1ff;
 const FONT_AREA_START:          u16 = 0x050;
@@ -28,7 +29,7 @@ pub struct Processor {
     // Keypad
     keypad: [u8; KEYPAD_SIZE],
     // Graphics
-    vram: [u8; SCREEN_WIDTH * SCREEN_HEIGHT],
+    vram: [u8; CHIP8_WIDTH * CHIP8_HEIGHT],
     // CPU registers
     V: [u8; NUM_REGISTERS],
     // Index register
@@ -53,7 +54,7 @@ impl Processor {
             stack: [0xff; STACK_SIZE],
             sp: 0,
             keypad: [0x00; KEYPAD_SIZE],
-            vram: [0x00; SCREEN_WIDTH * SCREEN_HEIGHT],
+            vram: [0x00; CHIP8_WIDTH * CHIP8_HEIGHT],
             V: [0x00; NUM_REGISTERS],
             I: 0,
             pc: 0,
