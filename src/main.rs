@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, thread, time};
 use colored::*;
 
 mod core;
@@ -38,10 +38,18 @@ fn main() {
 
     // VM loop
     while let Ok(keypad) = input_drivers.poll() {
-        processor.tick(keypad);
+        let output = processor.tick(keypad).unwrap();
 
         // Refresh the screen if needed
+        if output.vram_changed {
+            graphics_drivers.draw(&output.vram);
+        }
 
         // Beep if needed
+        if output.beep_request {
+
+        }
+
+        thread::sleep(time::Duration::from_secs(1));
     }
 }

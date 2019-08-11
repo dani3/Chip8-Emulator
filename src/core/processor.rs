@@ -22,6 +22,13 @@ const PROGRAM_AREA_START:     usize = 0x200;
 const PROGRAM_AREA_END:       usize = 0xfff;
 
 const WAITING_FOR_INPUT_BIT:     u8 = 0x01;
+const UPDATE_VRAM_BIT:           u8 = 0x02;
+
+pub struct Output {
+    pub vram_changed: bool,
+    pub beep_request: bool,
+    pub vram: [[u8; CHIP8_WIDTH]; CHIP8_HEIGHT]
+}
 
 /// The Chip-8 virtual machine is represented here
 pub struct Processor {
@@ -34,7 +41,7 @@ pub struct Processor {
     // Keypad
     keypad: [bool; KEYPAD_SIZE],
     // Graphics
-    vram: [u8; CHIP8_WIDTH * CHIP8_HEIGHT],
+    vram: [[u8; CHIP8_WIDTH]; CHIP8_HEIGHT],
     // CPU registers
     v: [u8; NUM_REGISTERS],
     // Index register
@@ -65,7 +72,7 @@ impl Processor {
             sp: 0,
             keypad: [false; KEYPAD_SIZE],
             // Cleary display
-            vram: [0x00; CHIP8_WIDTH * CHIP8_HEIGHT],
+            vram: [[0x00; CHIP8_WIDTH]; CHIP8_HEIGHT],
             // Clear registers
             v: [0x00; NUM_REGISTERS],
             // Clear index
@@ -97,9 +104,9 @@ impl Processor {
         }
     }
 
-    pub fn tick(&mut self, keypad: [bool; KEYPAD_SIZE]) {
+    pub fn tick(&mut self, keypad: [bool; KEYPAD_SIZE]) -> Result<Output, ()> {
         self.keypad = keypad;
-
+        self.cpu_flags = 0;
 
         // If the program is waiting for a key
         if self.cpu_flags & WAITING_FOR_INPUT_BIT == 1 {
@@ -123,17 +130,27 @@ impl Processor {
 
             match nibbles {
                 (0x0,0x0,0xe,0x0) => self.exec_cls(),
-                (0x0,0x0,0xe,0x0) => self.exec_ret(),
+                (0x0,0x0,0xe,0xe) => self.exec_ret(),
                 (0x0,_,_,_)       => self.exec_sys(nnn),
-                (_,_,_,_)         => return
+                (_,_,_,_)         => ()
             }
         }
+
+        Ok(Output {
+            vram_changed: ((self.cpu_flags & UPDATE_VRAM_BIT) == UPDATE_VRAM_BIT),
+            beep_request: false,
+            vram: self.vram
+        })
     }
 
     /// 00E0 - CLS
     /// Clear the display.
     fn exec_cls(&mut self) {
+        self.vram = [[0x00; CHIP8_WIDTH]; CHIP8_HEIGHT];
 
+        self.cpu_flags |= UPDATE_VRAM_BIT;
+
+        self.increment_pc();
     }
 
     /// 00EE - RET
