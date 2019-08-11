@@ -20,20 +20,20 @@ fn main() {
     println!("{} SDL2", "Initializing".green());
     let sdl_context = sdl2::init().unwrap();
 
-    // Initialize graphics drivers
-    println!("{} graphics drivers", "Initializing".green());
-    let mut graphics_drivers = GraphicsDriver::new(&sdl_context);
+    // Create the VM
+    let mut processor = Processor::new();
 
+    println!("{} drivers", "Initializing".green());
+    // Initialize graphics drivers
+    let mut graphics_drivers = GraphicsDriver::new(&sdl_context);
     // Initialize the input drivers
-    println!("{} input drivers", "Initializing".green());
     let mut input_drivers = InputDriver::new(&sdl_context);
 
     // Create the cartridge driver
     println!("{} cartridge", "Reading".green());
     let cartridge_driver = CartridgeDriver::new(&game).unwrap();
 
-    // Create the VM
-    let mut processor = Processor::new();
+    println!("{} {}", "Loading".green(), &game);
     processor.load(&cartridge_driver.get());
 
     // VM loop
