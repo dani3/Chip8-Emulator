@@ -1,3 +1,5 @@
+use colored::*;
+
 use crate::core::CHIP8_HEIGHT;
 use crate::core::CHIP8_WIDTH;
 use crate::core::FONTSET;
@@ -34,9 +36,9 @@ pub struct Processor {
     // Graphics
     vram: [u8; CHIP8_WIDTH * CHIP8_HEIGHT],
     // CPU registers
-    V: [u8; NUM_REGISTERS],
+    v: [u8; NUM_REGISTERS],
     // Index register
-    I: u16,
+    i: u16,
     // Program counter
     pc: u16,
     // OpCode
@@ -65,11 +67,11 @@ impl Processor {
             // Cleary display
             vram: [0x00; CHIP8_WIDTH * CHIP8_HEIGHT],
             // Clear registers
-            V: [0x00; NUM_REGISTERS],
+            v: [0x00; NUM_REGISTERS],
             // Clear index
-            I: 0,
+            i: 0,
             // Program counter starts at 0x200
-            pc: 0x200,
+            pc: PROGRAM_AREA_START as u16,
             // Reset OpCode
             op_code: 0,
             // Reset timers
@@ -98,6 +100,7 @@ impl Processor {
     pub fn tick(&mut self, keypad: [bool; KEYPAD_SIZE]) {
         self.keypad = keypad;
 
+
         // If the program is waiting for a key
         if self.cpu_flags & WAITING_FOR_INPUT_BIT == 1 {
             for i in 0..KEYPAD_SIZE {
@@ -119,32 +122,56 @@ impl Processor {
             let nnn = nibbles.1 << 8 | nibbles.2 << 4 | nibbles.3 as u16;
 
             match nibbles {
-                (0x00,_,_,_) => self.exec_0nnn(nnn),
-                (_,_,_,_)    => return
+                (0x0,0x0,0xe,0x0) => self.exec_cls(),
+                (0x0,0x0,0xe,0x0) => self.exec_ret(),
+                (0x0,_,_,_)       => self.exec_sys(nnn),
+                (_,_,_,_)         => return
             }
         }
     }
 
+    /// 00E0 - CLS
+    /// Clear the display.
+    fn exec_cls(&mut self) {
+
+    }
+
+    /// 00EE - RET
+    /// Return from a subroutine
+    /// The interpreter sets the program counter to the address
+    /// at the top of the stack, then subtracts 1 from the stack pointer.
+    fn exec_ret(&mut self) {
+
+    }
+
+    /// 0nnn - SYS addr
+    /// Jump to a machine code routine at nnn.
+    fn exec_sys(&mut self, nnn: u16) {
+        self.jump(nnn);
+    }
+
+    /// Return the opcode currently pointed from the program counter.
     fn read_opcode(&self) -> u16 {
         ((self.memory[self.pc as usize] as u16) << 8) |
           self.memory[(self.pc + 1) as usize] as u16
     }
 
+    /// Increment the program counter.
     fn increment_pc(&mut self) {
         self.pc += 2;
     }
 
+    /// Jump to the specified address.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - u16 containing the target address.
     fn jump(&mut self, addr: u16) {
         self.pc = addr;
     }
 
+    /// Skip the next opcode.
     fn skip(&mut self) {
         self.pc += 2 * OPCODE_SIZE;
-    }
-
-    /// 0nnn - SYS addr
-    /// Jump to a machine code routine at nnn.
-    fn exec_0nnn(&mut self, nnn: u16) {
-        self.jump(nnn);
     }
 }
