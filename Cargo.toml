@@ -9,3 +9,4 @@ build = "build.rs"
 
 [dependencies]
 sdl2 = "0.32"
+colored = "1.8"
