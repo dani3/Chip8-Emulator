@@ -39,5 +39,9 @@ fn main() {
     // VM loop
     while let Ok(keypad) = input_drivers.poll() {
         processor.tick(keypad);
+
+        // Refresh the screen if needed
+
+        // Beep if needed
     }
 }

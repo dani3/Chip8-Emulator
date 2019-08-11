@@ -10,6 +10,7 @@ use crate::core::FONTSET;
 const MEMORY_SIZE:            usize = 4096;
 const STACK_SIZE:             usize = 16;
 const KEYPAD_SIZE:            usize = 16;
+const OPCODE_SIZE:              u16 = 2;
 const NUM_REGISTERS:          usize = 16;
 const INTERPRETER_AREA_START: usize = 0x000;
 const INTERPRETER_AREA_END:   usize = 0x1ff;
@@ -111,11 +112,39 @@ impl Processor {
                 (opcode & 0x00F0) >> 4  as u8,
                 (opcode & 0x000F)       as u8
             );
+
+            let x = nibbles.1;
+            let y = nibbles.2;
+            let kk = nibbles.2 << 4 | nibbles.3 as u16;
+            let nnn = nibbles.1 << 8 | nibbles.2 << 4 | nibbles.3 as u16;
+
+            match nibbles {
+                (0x00,_,_,_) => self.exec_0nnn(nnn),
+                (_,_,_,_)    => return
+            }
         }
     }
 
     fn read_opcode(&self) -> u16 {
         ((self.memory[self.pc as usize] as u16) << 8) |
           self.memory[(self.pc + 1) as usize] as u16
+    }
+
+    fn increment_pc(&mut self) {
+        self.pc += 2;
+    }
+
+    fn jump(&mut self, addr: u16) {
+        self.pc = addr;
+    }
+
+    fn skip(&mut self) {
+        self.pc += 2 * OPCODE_SIZE;
+    }
+
+    /// 0nnn - SYS addr
+    /// Jump to a machine code routine at nnn.
+    fn exec_0nnn(&mut self, nnn: u16) {
+        self.jump(nnn);
     }
 }
