@@ -137,6 +137,7 @@ impl Processor {
                 (0x3,_,_,_)       => self.exec_se_vx_byte(x, kk),
                 (0x4,_,_,_)       => self.exec_sne_vx_byte(x, kk),
                 (0x5,_,_,_)       => self.exec_se_vx_vy(x, y),
+                (0x6,_,_,_)       => self.exec_ld_vx_byte(x, kk),
                 (_,_,_,_)         => ()
             }
         }
@@ -226,6 +227,14 @@ impl Processor {
         if self.v[x as usize] == self.v[y as usize] {
             self.skip();
         }
+    }
+
+    /// __6xkk - LD Vx, byte__
+    /// Set Vx = kk.
+    ///
+    /// The interpreter puts the value kk into register Vx.
+    fn exec_ld_vx_byte(&mut self, x: u8, kk: u8) {
+        self.v[x as usize] = kk;
     }
 
     /// Return the opcode currently pointed from the program counter.
