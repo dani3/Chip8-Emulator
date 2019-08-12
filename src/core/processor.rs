@@ -123,10 +123,10 @@ impl Processor {
                 (opcode & 0x000F)       as u8
             );
 
-            let x = nibbles.1;
-            let y = nibbles.2;
-            let kk = nibbles.2 << 4 | nibbles.3 as u16;
-            let nnn = nibbles.1 << 8 | nibbles.2 << 4 | nibbles.3 as u16;
+            let x   = nibbles.1 as u8;
+            let y   = nibbles.2 as u8;
+            let kk  = (opcode & 0x00FF) as u8;
+            let nnn = (opcode & 0x0FFF) as u16;
 
             match nibbles {
                 (0x0,0x0,0xe,0x0) => self.exec_cls(),
@@ -134,6 +134,7 @@ impl Processor {
                 (0x0,_,_,_)       => self.exec_sys(nnn),
                 (0x1,_,_,_)       => self.exec_jp(nnn),
                 (0x2,_,_,_)       => self.exec_call(nnn),
+                (0x3,_,_,_)       => self.exec_se(x, kk),
                 (_,_,_,_)         => ()
             }
         }
@@ -190,6 +191,17 @@ impl Processor {
         self.stack[self.sp as usize + 1] = self.pc >> 8;
 
         self.pc = nnn;
+    }
+
+    /// __3xkk - SE Vx, byte__
+    /// Skip next instruction if Vx = kk.
+    ///
+    /// The interpreter compares register Vx to kk, and if
+    /// they are equal, increments the program counter by 2.
+    fn exec_se(&mut self, x: u8, kk: u8) {
+        if kk == self.v[x as usize] {
+            self.skip();
+        }
     }
 
     /// Return the opcode currently pointed from the program counter.
