@@ -133,6 +133,7 @@ impl Processor {
                 (0x0,0x0,0xe,0xe) => self.exec_ret(),
                 (0x0,_,_,_)       => self.exec_sys(nnn),
                 (0x1,_,_,_)       => self.exec_jp(nnn),
+                (0x2,_,_,_)       => self.exec_call(nnn),
                 (_,_,_,_)         => ()
             }
         }
@@ -144,35 +145,51 @@ impl Processor {
         })
     }
 
-    /// 00E0 - CLS
+    /// __00E0 - CLS__
     /// Clear the display.
     fn exec_cls(&mut self) {
-        // Set the screen to zeros
         self.vram = [[0x00; CHIP8_WIDTH]; CHIP8_HEIGHT];
-        // Notify that the screen needs to be redrawn.
+
         self.cpu_flags |= UPDATE_VRAM_BIT;
 
         self.increment_pc();
     }
 
-    /// 00EE - RET
+    /// __00EE - RET__
     /// Return from a subroutine
+    ///
     /// The interpreter sets the program counter to the address
     /// at the top of the stack, then subtracts 1 from the stack pointer.
     fn exec_ret(&mut self) {
 
     }
 
-    /// 0nnn - SYS addr
+    /// __0nnn - SYS addr__
     /// Jump to a machine code routine at nnn.
     fn exec_sys(&mut self, nnn: u16) {
         self.jump(nnn);
     }
 
-    /// 1nnn - JP addr
-    /// Jump to a machine code routine at nnn.
+    /// __1nnn - JP addr__
+    /// Jump to location nnn.
+    ///
+    /// The interpreter sets the program counter to nnn.
     fn exec_jp(&mut self, nnn: u16) {
         self.jump(nnn);
+    }
+
+    /// __2nnn - CALL addr__
+    /// Call subroutine at nnn.
+    ///
+    /// The interpreter increments the stack pointer, then puts
+    /// the current PC on the top of the stack. The PC is then set to nnn.
+    fn exec_call(&mut self, nnn: u16) {
+        self.sp += OPCODE_SIZE;
+
+        self.stack[self.sp as usize]     = self.pc & 0xFF;
+        self.stack[self.sp as usize + 1] = self.pc >> 8;
+
+        self.pc = nnn;
     }
 
     /// Return the opcode currently pointed from the program counter.
