@@ -135,6 +135,7 @@ impl Processor {
                 (0x1,_,_,_)       => self.exec_jp(nnn),
                 (0x2,_,_,_)       => self.exec_call(nnn),
                 (0x3,_,_,_)       => self.exec_se(x, kk),
+                (0x4,_,_,_)       => self.exec_sne(x, kk),
                 (_,_,_,_)         => ()
             }
         }
@@ -200,6 +201,17 @@ impl Processor {
     /// they are equal, increments the program counter by 2.
     fn exec_se(&mut self, x: u8, kk: u8) {
         if kk == self.v[x as usize] {
+            self.skip();
+        }
+    }
+
+    /// __4xkk - SNE Vx, byte__
+    /// Skip next instruction if Vx != kk.
+    ///
+    /// The interpreter compares register Vx to kk, and if
+    /// they are not equal, increments the program counter by 2.
+    fn exec_sne(&mut self, x: u8, kk: u8) {
+        if kk != self.v[x as usize] {
             self.skip();
         }
     }
