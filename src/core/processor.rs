@@ -132,6 +132,7 @@ impl Processor {
                 (0x0,0x0,0xe,0x0) => self.exec_cls(),
                 (0x0,0x0,0xe,0xe) => self.exec_ret(),
                 (0x0,_,_,_)       => self.exec_sys(nnn),
+                (0x1,_,_,_)       => self.exec_jp(nnn),
                 (_,_,_,_)         => ()
             }
         }
@@ -146,8 +147,9 @@ impl Processor {
     /// 00E0 - CLS
     /// Clear the display.
     fn exec_cls(&mut self) {
+        // Set the screen to zeros
         self.vram = [[0x00; CHIP8_WIDTH]; CHIP8_HEIGHT];
-
+        // Notify that the screen needs to be redrawn.
         self.cpu_flags |= UPDATE_VRAM_BIT;
 
         self.increment_pc();
@@ -164,6 +166,12 @@ impl Processor {
     /// 0nnn - SYS addr
     /// Jump to a machine code routine at nnn.
     fn exec_sys(&mut self, nnn: u16) {
+        self.jump(nnn);
+    }
+
+    /// 1nnn - JP addr
+    /// Jump to a machine code routine at nnn.
+    fn exec_jp(&mut self, nnn: u16) {
         self.jump(nnn);
     }
 
