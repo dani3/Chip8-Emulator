@@ -128,6 +128,8 @@ impl Processor {
             let kk  = (opcode & 0x00FF) as u8;
             let nnn = (opcode & 0x0FFF) as u16;
 
+            print!("Opcode = {:x?} ", opcode);
+
             match nibbles {
                 (0x0,0x0,0xe,0x0) => self.exec_cls(),
                 (0x0,0x0,0xe,0xe) => self.exec_ret(),
@@ -152,6 +154,8 @@ impl Processor {
     /// __00E0 - CLS__
     /// Clear the display.
     fn exec_cls(&mut self) {
+        println!("CLS");
+
         self.vram = [[0x00; CHIP8_WIDTH]; CHIP8_HEIGHT];
 
         self.cpu_flags |= UPDATE_VRAM_BIT;
@@ -172,6 +176,8 @@ impl Processor {
     /// Jump to a machine code routine at nnn.
     fn exec_sys(&mut self, nnn: u16) {
         self.jump(nnn);
+
+        println!("SYS pc -> {:x?}", self.pc);
     }
 
     /// __1nnn - JP addr__
@@ -180,6 +186,8 @@ impl Processor {
     /// The interpreter sets the program counter to nnn.
     fn exec_jp(&mut self, nnn: u16) {
         self.jump(nnn);
+
+        println!("JP pc -> {:x?}", self.pc);
     }
 
     /// __2nnn - CALL addr__
@@ -193,7 +201,13 @@ impl Processor {
         self.stack[self.sp as usize]     = self.pc & 0xFF;
         self.stack[self.sp as usize + 1] = self.pc >> 8;
 
-        self.pc = nnn;
+        self.jump(nnn);
+
+        println!("CALL pc -> {:x?} | sp -> {:x?} | stack -> {:x?}{:x?}"
+            , self.pc
+            , self.sp
+            , self.stack[self.sp as usize]
+            , self.stack[(self.sp + 1) as usize]);
     }
 
     /// __3xkk - SE Vx, byte__
@@ -204,7 +218,11 @@ impl Processor {
     fn exec_se_vx_byte(&mut self, x: u8, kk: u8) {
         if kk == self.v[x as usize] {
             self.skip();
+        } else {
+            self.increment_pc();
         }
+
+        println!("SE V{:x?} byte {:x?} == {:x?}", x, kk, self.v[x as usize]);
     }
 
     /// __4xkk - SNE Vx, byte__
@@ -215,7 +233,11 @@ impl Processor {
     fn exec_sne_vx_byte(&mut self, x: u8, kk: u8) {
         if kk != self.v[x as usize] {
             self.skip();
+        } else {
+            self.increment_pc();
         }
+
+        println!("SNE V{:x?} byte {:x?} != {:x?}", x, kk, self.v[x as usize]);
     }
 
     /// __5xkk - SE Vx, Vy__
@@ -226,7 +248,11 @@ impl Processor {
     fn exec_se_vx_vy(&mut self, x: u8, y: u8) {
         if self.v[x as usize] == self.v[y as usize] {
             self.skip();
+        } else {
+            self.increment_pc();
         }
+
+        println!("SE V{:x?} byte {:x?} == {:x?}", x, self.v[x as usize], self.v[y as usize]);
     }
 
     /// __6xkk - LD Vx, byte__
@@ -235,6 +261,10 @@ impl Processor {
     /// The interpreter puts the value kk into register Vx.
     fn exec_ld_vx_byte(&mut self, x: u8, kk: u8) {
         self.v[x as usize] = kk;
+
+        self.increment_pc();
+
+        println!("LD V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// Return the opcode currently pointed from the program counter.
