@@ -141,6 +141,7 @@ impl Processor {
                 (0x5,_,_,_)       => self.exec_se_vx_vy(x, y),
                 (0x6,_,_,_)       => self.exec_ld_vx_byte(x, kk),
                 (0x7,_,_,_)       => self.exec_add_vx_byte(x, kk),
+                (0x8,_,_,0x0)     => self.exec_ld_vx_vy(x, y),
                 (_,_,_,_)         => ()
             }
         }
@@ -278,6 +279,18 @@ impl Processor {
         self.increment_pc();
 
         println!("ADD V{:x?} -> {:x?}", x, self.v[x as usize]);
+    }
+
+    /// __8xy0 - LD Vx, Vy__
+    /// Set Vx = Vy.
+    ///
+    /// Stores the value of register Vy in register Vx.
+    fn exec_ld_vx_vy(&mut self, x: u8, y: u8) {
+        self.v[x as usize] = self.v[y as usize];
+
+        self.increment_pc();
+
+        println!("LD V{:x?} -> V{:x?}", y, x);
     }
 
     /// Return the opcode currently pointed from the program counter.
