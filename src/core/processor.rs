@@ -140,6 +140,7 @@ impl Processor {
                 (0x4,_,_,_)       => self.exec_sne_vx_byte(x, kk),
                 (0x5,_,_,_)       => self.exec_se_vx_vy(x, y),
                 (0x6,_,_,_)       => self.exec_ld_vx_byte(x, kk),
+                (0x7,_,_,_)       => self.exec_add_vx_byte(x, kk),
                 (_,_,_,_)         => ()
             }
         }
@@ -265,6 +266,18 @@ impl Processor {
         self.increment_pc();
 
         println!("LD V{:x?} -> {:x?}", x, self.v[x as usize]);
+    }
+
+    /// __7xkk - ADD Vx, byte__
+    /// Set Vx = Vx + kk.
+    ///
+    /// Adds the value kk to the value of register Vx, then stores the result in Vx.
+    fn exec_add_vx_byte(&mut self, x: u8, kk: u8) {
+        self.v[x as usize] += kk;
+
+        self.increment_pc();
+
+        println!("ADD V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// Return the opcode currently pointed from the program counter.
