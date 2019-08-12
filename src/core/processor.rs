@@ -134,8 +134,9 @@ impl Processor {
                 (0x0,_,_,_)       => self.exec_sys(nnn),
                 (0x1,_,_,_)       => self.exec_jp(nnn),
                 (0x2,_,_,_)       => self.exec_call(nnn),
-                (0x3,_,_,_)       => self.exec_se(x, kk),
-                (0x4,_,_,_)       => self.exec_sne(x, kk),
+                (0x3,_,_,_)       => self.exec_se_vx_byte(x, kk),
+                (0x4,_,_,_)       => self.exec_sne_vx_byte(x, kk),
+                (0x5,_,_,_)       => self.exec_se_vx_vy(x, y),
                 (_,_,_,_)         => ()
             }
         }
@@ -199,7 +200,7 @@ impl Processor {
     ///
     /// The interpreter compares register Vx to kk, and if
     /// they are equal, increments the program counter by 2.
-    fn exec_se(&mut self, x: u8, kk: u8) {
+    fn exec_se_vx_byte(&mut self, x: u8, kk: u8) {
         if kk == self.v[x as usize] {
             self.skip();
         }
@@ -210,8 +211,19 @@ impl Processor {
     ///
     /// The interpreter compares register Vx to kk, and if
     /// they are not equal, increments the program counter by 2.
-    fn exec_sne(&mut self, x: u8, kk: u8) {
+    fn exec_sne_vx_byte(&mut self, x: u8, kk: u8) {
         if kk != self.v[x as usize] {
+            self.skip();
+        }
+    }
+
+    /// __5xkk - SE Vx, Vy__
+    /// Skip next instruction if Vx = Vy.
+    ///
+    /// The interpreter compares register Vx to register Vy, and if
+    /// they are equal, increments the program counter by 2.
+    fn exec_se_vx_vy(&mut self, x: u8, y: u8) {
+        if self.v[x as usize] == self.v[y as usize] {
             self.skip();
         }
     }
