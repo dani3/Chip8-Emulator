@@ -151,6 +151,7 @@ impl Processor {
                 (0x8,_,_,0x7)     => self.exec_subn_vx_vy(x, y),
                 (0x8,_,_,0xe)     => self.exec_shl_vx_vy(x),
                 (0x9,_,_,0x0)     => self.exec_sne_vx_vy(x, y),
+                (0xa,_,_,_)       => self.exec_ld_i(nnn),
                 (_,_,_,_)         => ()
             }
         }
@@ -444,6 +445,18 @@ impl Processor {
         }
 
         println!("SNE {:x?} != {:x?}", self.v[x as usize], self.v[y as usize]);
+    }
+
+    /// __annn - LD I, addr__
+    /// Set I = nnn.
+    ///
+    /// The value of register I is set to nnn.
+    fn exec_ld_i(&mut self, nnn: u16) {
+        self.i = nnn;
+
+        self.increment_pc();
+
+        println!("LD I {:x?}", self.i);
     }
 
     /// Return the opcode currently pointed from the program counter.
