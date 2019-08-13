@@ -100,7 +100,7 @@ impl Processor {
             panic!("Game is too big");
         }
 
-        for i in 0..game.len() {
+        for i in 0 .. game.len() {
             self.memory[PROGRAM_AREA_START + i] = game[i];
         }
     }
@@ -111,7 +111,7 @@ impl Processor {
 
         // If the program is waiting for a key
         if self.cpu_flags & WAITING_FOR_INPUT_BIT == 1 {
-            for i in 0..KEYPAD_SIZE {
+            for i in 0 .. KEYPAD_SIZE {
 
             }
         }
@@ -126,6 +126,7 @@ impl Processor {
 
             let x   = nibbles.1 as u8;
             let y   = nibbles.2 as u8;
+            let n   = nibbles.3 as u8;
             let kk  = (opcode & 0x00FF) as u8;
             let nnn = (opcode & 0x0FFF) as u16;
 
@@ -155,6 +156,7 @@ impl Processor {
                 (0xa,_,_,_)       => self.exec_ld_i(nnn),
                 (0xb,_,_,_)       => self.exec_jp_v0(nnn),
                 (0xc,_,_,_)       => self.exec_rnd(x, kk),
+                (0xd,_,_,_)       => self.exec_drw(x, y, n),
                 (_,_,_,_)         => ()
             }
         }
@@ -459,7 +461,7 @@ impl Processor {
 
         self.increment_pc();
 
-        println!("LD I {:x?}", self.i);
+        println!("LD I -> {:x?}", self.i);
     }
 
     /// __bnnn - JP V0, addr__
@@ -482,6 +484,46 @@ impl Processor {
         self.v[x as usize] = rng.gen_range(0, 255) & kk;
 
         println!("RND rnd -> {:x?}", self.v[x as usize]);
+    }
+
+    /// __dxyn - DRW Vx, Vy, nibble__
+    /// Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+    ///
+    /// The interpreter reads n bytes from memory, starting at the
+    /// address stored in I. These bytes are then displayed as sprites
+    /// on screen at coordinates (Vx, Vy). Sprites are XORed onto the
+    /// existing screen. If this causes any pixels to be erased, VF is
+    /// set to 1, otherwise it is set to 0. If the sprite is positioned
+    /// so part of it is outside the coordinates of the display, it wraps
+    /// around to the opposite side of the screen.
+    fn exec_drw(&mut self, x: u8, y: u8, n: u8) {
+        let xpos = self.v[x as usize] as usize;
+        let ypos = self.v[y as usize] as usize;
+
+        let mut sprite: Vec<u8> = Vec::new();
+        for i in self.i .. (self.i + n as u16) {
+            sprite.push(self.memory[i as usize]);
+        }
+
+        self.v[0xf] = 0;
+
+        for yline in 0 .. sprite.len() {
+            let pixel = sprite[yline];
+            for xline in 0 .. 8 {
+                if (pixel & (0x80 >> xline)) != 0 {
+                    if self.vram[xpos + xline][ypos + yline] == 1 {
+                        self.v[0xf] = 1;
+                    }
+
+                    self.vram[xpos + xline][ypos + yline] ^= 1;
+                }
+            }
+        }
+
+        self.cpu_flags |= UPDATE_VRAM_BIT;
+        self.increment_pc();
+
+        println!("DRW");
     }
 
     /// Return the opcode currently pointed from the program counter.
