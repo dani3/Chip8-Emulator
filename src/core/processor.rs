@@ -152,6 +152,7 @@ impl Processor {
                 (0x8,_,_,0xe)     => self.exec_shl_vx_vy(x),
                 (0x9,_,_,0x0)     => self.exec_sne_vx_vy(x, y),
                 (0xa,_,_,_)       => self.exec_ld_i(nnn),
+                (0xb,_,_,_)       => self.exec_jp_v0(nnn),
                 (_,_,_,_)         => ()
             }
         }
@@ -457,6 +458,16 @@ impl Processor {
         self.increment_pc();
 
         println!("LD I {:x?}", self.i);
+    }
+
+    /// __bnnn - JP V0, addr__
+    /// Jump to location nnn + V0.
+    ///
+    /// The program counter is set to nnn plus the value of V0.
+    fn exec_jp_v0(&mut self, nnn: u16) {
+        self.pc = nnn + self.v[0x0] as u16;
+
+        println!("JP V0 pc -> {:x?}", self.pc);
     }
 
     /// Return the opcode currently pointed from the program counter.
