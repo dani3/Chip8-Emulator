@@ -144,6 +144,7 @@ impl Processor {
                 (0x8,_,_,0x0)     => self.exec_ld_vx_vy(x, y),
                 (0x8,_,_,0x1)     => self.exec_or_vx_vy(x, y),
                 (0x8,_,_,0x2)     => self.exec_and_vx_vy(x, y),
+                (0x8,_,_,0x3)     => self.exec_xor_vx_vy(x, y),
                 (_,_,_,_)         => ()
             }
         }
@@ -319,6 +320,19 @@ impl Processor {
         self.increment_pc();
 
         println!("AND V{:x?} -> V{:x?}", y, x);
+    }
+
+    /// __8xy3 - XOR Vx, Vy__
+    /// Set Vx = Vx XOR Vy.
+    ///
+    /// Performs a bitwise exclusive OR on the values of Vx and Vy, then
+    /// stores the result in Vx.
+    fn exec_xor_vx_vy(&mut self, x: u8, y: u8) {
+        self.v[x as usize] ^= self.v[y as usize];
+
+        self.increment_pc();
+
+        println!("XOR V{:x?} -> V{:x?}", y, x);
     }
 
     /// Return the opcode currently pointed from the program counter.
