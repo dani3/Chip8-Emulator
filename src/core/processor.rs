@@ -1,4 +1,5 @@
 use colored::*;
+use rand::Rng;
 
 use crate::core::CHIP8_HEIGHT;
 use crate::core::CHIP8_WIDTH;
@@ -153,6 +154,7 @@ impl Processor {
                 (0x9,_,_,0x0)     => self.exec_sne_vx_vy(x, y),
                 (0xa,_,_,_)       => self.exec_ld_i(nnn),
                 (0xb,_,_,_)       => self.exec_jp_v0(nnn),
+                (0xc,_,_,_)       => self.exec_rnd(x, kk),
                 (_,_,_,_)         => ()
             }
         }
@@ -468,6 +470,18 @@ impl Processor {
         self.pc = nnn + self.v[0x0] as u16;
 
         println!("JP V0 pc -> {:x?}", self.pc);
+    }
+
+    /// __cxkk - RND Vx, byte__
+    /// Set Vx = random byte AND kk.
+    ///
+    /// The interpreter generates a random number from 0 to 255, which is
+    /// then ANDed with the value kk. The results are stored in Vx.
+    fn exec_rnd(&mut self, x: u8, kk: u8) {
+        let mut rng = rand::thread_rng();
+        self.v[x as usize] = rng.gen_range(0, 255) & kk;
+
+        println!("RND rnd -> {:x?}", self.v[x as usize]);
     }
 
     /// Return the opcode currently pointed from the program counter.
