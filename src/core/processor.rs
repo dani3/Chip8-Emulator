@@ -157,6 +157,7 @@ impl Processor {
                 (0xb,_,_,_)       => self.exec_jp_v0(nnn),
                 (0xc,_,_,_)       => self.exec_rnd(x, kk),
                 (0xd,_,_,_)       => self.exec_drw(x, y, n),
+                (0xe,_,0xa,0x1)   => self.exec_skp(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -524,6 +525,21 @@ impl Processor {
         self.increment_pc();
 
         println!("DRW");
+    }
+
+    /// __ex9e - SKP Vx__
+    /// Skip next instruction if key with the value of Vx is pressed.
+    ///
+    /// Checks the keyboard, and if the key corresponding to the value of Vx is
+    /// currently in the down position, PC is increased by 2.
+    fn exec_skp(&mut self, x: u8) {
+        if self.keypad[self.v[x as usize] as usize] {
+            self.skip();
+        } else {
+            self.increment_pc();
+        }
+
+        println!("SKP Vx = {:x?}", self.v[x as usize]);
     }
 
     /// Return the opcode currently pointed from the program counter.
