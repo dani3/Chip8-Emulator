@@ -149,6 +149,7 @@ impl Processor {
                 (0x8,_,_,0x5)     => self.exec_sub_vx_vy(x, y),
                 (0x8,_,_,0x6)     => self.exec_shr_vx_vy(x),
                 (0x8,_,_,0x7)     => self.exec_subn_vx_vy(x, y),
+                (0x8,_,_,0xe)     => self.exec_shl_vx_vy(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -412,6 +413,21 @@ impl Processor {
         self.increment_pc();
 
         println!("SUBN V{:x?} -> V{:x?} (VF = {:x?})", y, x, self.v[0xf]);
+    }
+
+    /// __8xye - SHL Vx {, Vy}__
+    /// Set Vx = Vx SHL 1.
+    ///
+    /// If the most-significant bit of Vx is 1, then VF is
+    /// set to 1, otherwise 0. Then Vx is multiplied by 2.
+    fn exec_shl_vx_vy(&mut self, x: u8) {
+        self.v[0xf] = self.v[x as usize] & 0x80;
+
+        self.v[x as usize] <<= 1;
+
+        self.increment_pc();
+
+        println!("SHL V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// Return the opcode currently pointed from the program counter.
