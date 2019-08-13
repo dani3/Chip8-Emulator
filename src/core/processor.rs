@@ -148,6 +148,7 @@ impl Processor {
                 (0x8,_,_,0x4)     => self.exec_add_vx_vy(x, y),
                 (0x8,_,_,0x5)     => self.exec_sub_vx_vy(x, y),
                 (0x8,_,_,0x6)     => self.exec_shr_vx_vy(x),
+                (0x8,_,_,0x7)     => self.exec_subn_vx_vy(x, y),
                 (_,_,_,_)         => ()
             }
         }
@@ -370,8 +371,9 @@ impl Processor {
             self.v[0xf] = 1;
         } else {
             self.v[0xf] = 0;
-            self.v[x as usize] -= self.v[y as usize];
         }
+
+        self.v[x as usize] = self.v[x as usize].wrapping_sub(self.v[y as usize]);
 
         self.increment_pc();
 
@@ -384,17 +386,32 @@ impl Processor {
     /// If the least-significant bit of Vx is 1, then VF is
     /// set to 1, otherwise 0. Then Vx is divided by 2.
     fn exec_shr_vx_vy(&mut self, x: u8) {
-        if (self.v[x as usize] & 0x01) == 0x01 {
-            self.v[0xf] = 1;
-        } else {
-            self.v[0xf] = 0;
-        }
+        self.v[0xf] = self.v[x as usize] & 0x01;
 
         self.v[x as usize] >>= 1;
 
         self.increment_pc();
 
         println!("SHR V{:x?} -> {:x?}", x, self.v[x as usize]);
+    }
+
+    /// __8xy7 - SUBN Vx, Vy__
+    /// Set Vx = Vy- Vx. Set VF = NOT borrow.
+    ///
+    /// If Vy > Vx, then VF is set to 1, otherwise 0. Then Vy is subtracted
+    /// from Vx, and the results stored in Vx.
+    fn exec_subn_vx_vy(&mut self, x: u8, y: u8) {
+        if self.v[x as usize] < self.v[y as usize] {
+            self.v[0xf] = 1;
+        } else {
+            self.v[0xf] = 0;
+        }
+
+        self.v[x as usize] = self.v[y as usize].wrapping_sub(self.v[x as usize]);
+
+        self.increment_pc();
+
+        println!("SUBN V{:x?} -> V{:x?} (VF = {:x?})", y, x, self.v[0xf]);
     }
 
     /// Return the opcode currently pointed from the program counter.
