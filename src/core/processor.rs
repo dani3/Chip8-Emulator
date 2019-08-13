@@ -145,6 +145,7 @@ impl Processor {
                 (0x8,_,_,0x1)     => self.exec_or_vx_vy(x, y),
                 (0x8,_,_,0x2)     => self.exec_and_vx_vy(x, y),
                 (0x8,_,_,0x3)     => self.exec_xor_vx_vy(x, y),
+                (0x8,_,_,0x4)     => self.exec_add_vx_vy(x, y),
                 (_,_,_,_)         => ()
             }
         }
@@ -333,6 +334,28 @@ impl Processor {
         self.increment_pc();
 
         println!("XOR V{:x?} -> V{:x?}", y, x);
+    }
+
+    /// __8xy4 - ADD Vx, Vy__
+    /// Set Vx = Vx + Vy. Set VF = carry.
+    ///
+    /// The values of Vx and Vy are added together. If the result
+    /// is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0.
+    /// Only the lowest 8 bits of the result are kept, and stored in Vx.
+    fn exec_add_vx_vy(&mut self, x: u8, y: u8) {
+        let sum = self.v[x as usize] as u16 + self.v[y as usize] as u16;
+        let carry = sum > 255;
+        if carry {
+            self.v[0xf] = 1;
+        } else {
+            self.v[0xf] = 0;
+        }
+
+        self.v[x as usize] = sum as u8;
+
+        self.increment_pc();
+
+        println!("ADD V{:x?} -> V{:x?} (VF = {:x?})", y, x, self.v[0xf]);
     }
 
     /// Return the opcode currently pointed from the program counter.
