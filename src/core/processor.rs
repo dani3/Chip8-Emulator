@@ -150,6 +150,7 @@ impl Processor {
                 (0x8,_,_,0x6)     => self.exec_shr_vx_vy(x),
                 (0x8,_,_,0x7)     => self.exec_subn_vx_vy(x, y),
                 (0x8,_,_,0xe)     => self.exec_shl_vx_vy(x),
+                (0x9,_,_,0x0)     => self.exec_sne_vx_vy(x, y),
                 (_,_,_,_)         => ()
             }
         }
@@ -428,6 +429,21 @@ impl Processor {
         self.increment_pc();
 
         println!("SHL V{:x?} -> {:x?}", x, self.v[x as usize]);
+    }
+
+    /// __9xy0 - SNE Vx, Vy__
+    /// Skip next instruction if Vx != Vy.
+    ///
+    /// The values of Vx and Vy are compared, and if they are not
+    /// equal, the program counter is increased by 2.
+    fn exec_sne_vx_vy(&mut self, x: u8, y: u8) {
+        if self.v[x as usize] != self.v[y as usize] {
+            self.skip();
+        } else {
+            self.increment_pc();
+        }
+
+        println!("SNE {:x?} != {:x?}", self.v[x as usize], self.v[y as usize]);
     }
 
     /// Return the opcode currently pointed from the program counter.
