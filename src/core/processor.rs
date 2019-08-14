@@ -165,6 +165,7 @@ impl Processor {
                 (0xe,_,0xa,0x1)   => self.exec_sknp(x),
                 (0xf,_,0x0,0x7)   => self.exec_ld_vx_dt(x),
                 (0xf,_,0x0,0xa)   => self.exec_ld_vx_k(x),
+                (0xf,_,0x1,0x5)   => self.exec_ld_dt_vx(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -569,7 +570,7 @@ impl Processor {
     ///
     /// The value of DT is placed into Vx.
     fn exec_ld_vx_dt(&mut self, x: u8) {
-        self.delay_timer = self.v[x as usize];
+        self.v[x as usize] = self.delay_timer;
 
         self.increment_pc();
 
