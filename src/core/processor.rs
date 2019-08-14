@@ -166,6 +166,7 @@ impl Processor {
                 (0xf,_,0x0,0x7)   => self.exec_ld_vx_dt(x),
                 (0xf,_,0x0,0xa)   => self.exec_ld_vx_k(x),
                 (0xf,_,0x1,0x5)   => self.exec_ld_dt_vx(x),
+                (0xf,_,0x1,0x8)   => self.exec_ld_st_vx(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -601,6 +602,18 @@ impl Processor {
         self.increment_pc();
 
         println!("LD V{:x?} -> DT = {:x?}", x, self.delay_timer);
+    }
+
+    /// __fx18 - LD ST, Vc__
+    /// Set sound timer = Vx.
+    ///
+    /// ST is set equal to the value of Vx.
+    fn exec_ld_st_vx(&mut self, x: u8) {
+        self.sound_timer = self.v[x as usize];
+
+        self.increment_pc();
+
+        println!("LD V{:x?} -> ST = {:x?}", x, self.sound_timer);
     }
 
     /// Return the opcode currently pointed from the program counter.
