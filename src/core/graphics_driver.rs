@@ -47,10 +47,10 @@ impl GraphicsDriver {
                 let _ =
                     self.canvas.fill_rect(
                         Rect::new(xpos as i32, ypos as i32, SCALE_FACTOR, SCALE_FACTOR));
-
-                self.canvas.present();
             }
         }
+
+        self.canvas.present();
     }
 
     fn create_color(&self, is_set: bool) -> Color {

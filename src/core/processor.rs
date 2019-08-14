@@ -316,7 +316,12 @@ impl Processor {
     ///
     /// Adds the value kk to the value of register Vx, then stores the result in Vx.
     fn exec_add_vx_byte(&mut self, x: u8, kk: u8) {
-        self.v[x as usize] += kk;
+        let i = kk as u16;
+        let j = self.v[x as usize] as u16;
+
+        let sum = i + j;
+
+        self.v[x as usize] = sum as u8;
 
         self.increment_pc();
 
