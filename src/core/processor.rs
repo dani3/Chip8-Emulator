@@ -167,6 +167,7 @@ impl Processor {
                 (0xf,_,0x0,0xa)   => self.exec_ld_vx_k(x),
                 (0xf,_,0x1,0x5)   => self.exec_ld_dt_vx(x),
                 (0xf,_,0x1,0x8)   => self.exec_ld_st_vx(x),
+                (0xf,_,0x1,0xe)   => self.exec_add_i_vx(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -614,6 +615,18 @@ impl Processor {
         self.increment_pc();
 
         println!("LD V{:x?} -> ST = {:x?}", x, self.sound_timer);
+    }
+
+    /// __fx1e - ADD I, Vx__
+    /// Set I = I + Vx.
+    ///
+    /// The values of I and Vx are added, and the results are stored in I.
+    fn exec_add_i_vx(&mut self, x: u8) {
+        self.i += self.v[x as usize] as u16;
+
+        self.increment_pc();
+
+        println!("ADD I + V{:x?} -> I = {:x?}", x, self.i);
     }
 
     /// Return the opcode currently pointed from the program counter.
