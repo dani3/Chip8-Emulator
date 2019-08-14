@@ -49,8 +49,6 @@ pub struct Processor {
     i: u16,
     // Program counter
     pc: u16,
-    // OpCode
-    op_code: u16,
     // Delay timer
     delay_timer: u8,
     // Sound timer
@@ -80,8 +78,6 @@ impl Processor {
             i: 0,
             // Program counter starts at 0x200
             pc: PROGRAM_AREA_START as u16,
-            // Reset OpCode
-            op_code: 0,
             // Reset timers
             delay_timer: 0,
             sound_timer: 0,
@@ -159,6 +155,7 @@ impl Processor {
                 (0xd,_,_,_)       => self.exec_drw(x, y, n),
                 (0xe,_,0x9,0xe)   => self.exec_skp(x),
                 (0xe,_,0xa,0x1)   => self.exec_sknp(x),
+                (0xf,_,0x0,0x7)   => self.exec_ld_vx_dt(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -556,6 +553,16 @@ impl Processor {
         }
 
         println!("SKNP Vx = {:x?} : {}", self.v[x as usize], self.keypad[self.v[x as usize] as usize]);
+    }
+
+    /// __fx07 - LD Vx, DT__
+    /// Set Vx = delay timer value.
+    ///
+    /// The value of DT is placed into Vx.
+    fn exec_ld_vx_dt(&mut self, x: u8) {
+        self.delay_timer = self.v[x as usize];
+
+        println!("LD V{:x?} -> DT = {:x?}", x, self.delay_timer);
     }
 
     /// Return the opcode currently pointed from the program counter.
