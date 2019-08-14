@@ -168,6 +168,7 @@ impl Processor {
                 (0xf,_,0x1,0x5)   => self.exec_ld_dt_vx(x),
                 (0xf,_,0x1,0x8)   => self.exec_ld_st_vx(x),
                 (0xf,_,0x1,0xe)   => self.exec_add_i_vx(x),
+                (0xf,_,0x2,0x9)   => self.exec_ld_f_vx(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -623,10 +624,24 @@ impl Processor {
     /// The values of I and Vx are added, and the results are stored in I.
     fn exec_add_i_vx(&mut self, x: u8) {
         self.i += self.v[x as usize] as u16;
+        self.v[0xf] = if self.i > 0x0F00 { 1 } else { 0 };
 
         self.increment_pc();
 
         println!("ADD I + V{:x?} -> I = {:x?}", x, self.i);
+    }
+
+    /// __fx29 - LD F, Vx__
+    /// Set I = location of sprite for digit Vx.
+    ///
+    /// The value of I is set to the location for the
+    /// hexadecimal sprite corresponding to the value of Vx.
+    fn exec_ld_f_vx(&mut self, x: u8) {
+        self.i = (self.v[x as usize] as u16) * 5;
+
+        self.increment_pc();
+
+        println!("LD F V{:x?} -> I = {:x?}", x, self.i);
     }
 
     /// Return the opcode currently pointed from the program counter.
