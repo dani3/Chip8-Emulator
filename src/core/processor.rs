@@ -171,6 +171,7 @@ impl Processor {
                 (0xf,_,0x2,0x9)   => self.exec_ld_f_vx(x),
                 (0xf,_,0x3,0x3)   => self.exec_ld_b_vx(x),
                 (0xf,_,0x5,0x5)   => self.exec_ld_i_vx(x),
+                (0xf,_,0x6,0x5)   => self.exec_ld_vx_i(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -687,6 +688,22 @@ impl Processor {
         self.increment_pc();
 
         println!("LD I -> V : {:x?}", self.v[limit]);
+    }
+
+    /// __fx65 - LD Vx, [I]__
+    /// Read registers V0 through Vx from memory starting at location I.
+    ///
+    /// The interpreter reads values from memory starting at location I
+    /// into registers V0 through Vx.
+    fn exec_ld_vx_i(&mut self, x: u8) {
+        let limit = x as usize;
+        for i in 0 .. limit {
+            self.v[i] = self.memory[self.i as usize + i];
+        }
+
+        self.increment_pc();
+
+        println!("LD V -> I : {:x?}", self.v[limit]);
     }
 
     /// Return the opcode currently pointed from the program counter.
