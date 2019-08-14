@@ -169,6 +169,7 @@ impl Processor {
                 (0xf,_,0x1,0x8)   => self.exec_ld_st_vx(x),
                 (0xf,_,0x1,0xe)   => self.exec_add_i_vx(x),
                 (0xf,_,0x2,0x9)   => self.exec_ld_f_vx(x),
+                (0xf,_,0x3,0x3)   => self.exec_ld_b_vx(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -642,6 +643,33 @@ impl Processor {
         self.increment_pc();
 
         println!("LD F V{:x?} -> I = {:x?}", x, self.i);
+    }
+
+    /// __fx33 - LD B, Vx__
+    /// Store BCD representation of Vx in memory locations I, I+1, and I+2.
+    ///
+    /// The interpreter takes the decimal value of Vx, and places
+    /// the hundreds digit in memory at location in I, the tens
+    /// digit at location I+1, and the ones digit at location I+2.
+    fn exec_ld_b_vx(&mut self, x: u8) {
+        let value = self.v[x as usize];
+
+        let hundreds = value / 100;
+        let tens = (value % 100) / 10;
+        let ones = value % 10;
+
+        self.memory[self.i as usize]     = hundreds;
+        self.memory[self.i as usize + 1] = tens;
+        self.memory[self.i as usize + 2] = ones;
+
+        self.increment_pc();
+
+        println!("LD B V{:x?} = {:x?} -> I = [{:x?}, {:x?}, {:x?}]"
+            , x
+            , self.v[x as usize]
+            , self.memory[self.i as usize]
+            , self.memory[self.i as usize + 1]
+            , self.memory[self.i as usize + 2]);
     }
 
     /// Return the opcode currently pointed from the program counter.
