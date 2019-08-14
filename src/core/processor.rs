@@ -170,6 +170,7 @@ impl Processor {
                 (0xf,_,0x1,0xe)   => self.exec_add_i_vx(x),
                 (0xf,_,0x2,0x9)   => self.exec_ld_f_vx(x),
                 (0xf,_,0x3,0x3)   => self.exec_ld_b_vx(x),
+                (0xf,_,0x5,0x5)   => self.exec_ld_i_vx(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -670,6 +671,22 @@ impl Processor {
             , self.memory[self.i as usize]
             , self.memory[self.i as usize + 1]
             , self.memory[self.i as usize + 2]);
+    }
+
+    /// __fx55 - LD [I], Vx__
+    /// Store registers V0 through Vx in memory starting at location I.
+    ///
+    /// The interpreter copies the values of registers V0 through
+    /// Vx into memory, starting at the address in I.
+    fn exec_ld_i_vx(&mut self, x: u8) {
+        let limit = x as usize;
+        for i in 0 .. limit {
+            self.memory[self.i as usize + i] = self.v[i];
+        }
+
+        self.increment_pc();
+
+        println!("LD I -> V : {:x?}", self.v[limit]);
     }
 
     /// Return the opcode currently pointed from the program counter.
