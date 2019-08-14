@@ -574,7 +574,7 @@ impl Processor {
 
         self.increment_pc();
 
-        println!("LD V{:x?} -> DT = {:x?}", x, self.delay_timer);
+        println!("LD DT = {:x?} -> V{:x?}", self.v[x as usize], x);
     }
 
     /// __fx0a - LD Vx, K__
@@ -589,6 +589,18 @@ impl Processor {
         self.increment_pc();
 
         println!("LD V{:x?}, K", x);
+    }
+
+    /// __fx14 - LD DT, Vc__
+    /// Set delay timer = Vx.
+    ///
+    /// DT is set equal to the value of Vx.
+    fn exec_ld_dt_vx(&mut self, x: u8) {
+        self.delay_timer = self.v[x as usize];
+
+        self.increment_pc();
+
+        println!("LD V{:x?} -> DT = {:x?}", x, self.delay_timer);
     }
 
     /// Return the opcode currently pointed from the program counter.
