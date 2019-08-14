@@ -54,7 +54,9 @@ pub struct Processor {
     // Sound timer
     sound_timer: u8,
     // Flags
-    cpu_flags: u8
+    cpu_flags: u8,
+    // Selected register
+    selected_v: u8
 }
 
 impl Processor {
@@ -83,6 +85,7 @@ impl Processor {
             sound_timer: 0,
             // Clear flags
             cpu_flags: 0,
+            selected_v: 0
         }
     }
 
@@ -108,7 +111,12 @@ impl Processor {
         // If the program is waiting for a key
         if self.cpu_flags & WAITING_FOR_INPUT_BIT == 1 {
             for i in 0 .. KEYPAD_SIZE {
-
+                if self.keypad[i] {
+                    // Clear the flag
+                    self.cpu_flags = 0;
+                    // And store what key has been pressed.
+                    self.v[self.selected_v as usize] = i as u8;
+                }
             }
         }
         else {
@@ -156,6 +164,7 @@ impl Processor {
                 (0xe,_,0x9,0xe)   => self.exec_skp(x),
                 (0xe,_,0xa,0x1)   => self.exec_sknp(x),
                 (0xf,_,0x0,0x7)   => self.exec_ld_vx_dt(x),
+                (0xf,_,0x0,0xa)   => self.exec_ld_vx_k(x),
                 (_,_,_,_)         => ()
             }
         }
@@ -562,7 +571,23 @@ impl Processor {
     fn exec_ld_vx_dt(&mut self, x: u8) {
         self.delay_timer = self.v[x as usize];
 
+        self.increment_pc();
+
         println!("LD V{:x?} -> DT = {:x?}", x, self.delay_timer);
+    }
+
+    /// __fx0a - LD Vx, K__
+    /// Wait for a key press, store the value of the key in Vx
+    ///
+    /// All execution stops until a key is pressed, then the value
+    /// of that key is stored in Vx.
+    fn exec_ld_vx_k(&mut self, x: u8) {
+        self.cpu_flags |= WAITING_FOR_INPUT_BIT;
+        self.selected_v = x;
+
+        self.increment_pc();
+
+        println!("LD V{:x?}, K", x);
     }
 
     /// Return the opcode currently pointed from the program counter.
