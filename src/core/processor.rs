@@ -108,6 +108,8 @@ impl Processor {
         self.keypad = keypad;
         self.cpu_flags = 0;
 
+        let mut beep_request = false;
+
         // If the program is waiting for a key
         if self.cpu_flags & WAITING_FOR_INPUT_BIT == 1 {
             for i in 0 .. KEYPAD_SIZE {
@@ -120,6 +122,16 @@ impl Processor {
             }
         }
         else {
+            if self.delay_timer > 0 {
+                self.delay_timer -= 1;
+            }
+
+            if self.sound_timer > 0 {
+                self.sound_timer -= 1;
+
+                beep_request = self.sound_timer == 0;
+            }
+
             let opcode = self.read_opcode();
             let nibbles = (
                 (opcode & 0xF000) >> 12 as u8,
@@ -178,7 +190,7 @@ impl Processor {
 
         Ok(Output {
             vram_changed: ((self.cpu_flags & UPDATE_VRAM_BIT) == UPDATE_VRAM_BIT),
-            beep_request: false,
+            beep_request,
             vram: self.vram
         })
     }
@@ -201,7 +213,8 @@ impl Processor {
     /// The interpreter sets the program counter to the address
     /// at the top of the stack, then subtracts 1 from the stack pointer.
     fn exec_ret(&mut self) {
-
+        self.sp -= 1;
+        self.pc = self.stack[self.sp as usize];
     }
 
     /// __0nnn - SYS addr__
@@ -228,10 +241,9 @@ impl Processor {
     /// The interpreter increments the stack pointer, then puts
     /// the current PC on the top of the stack. The PC is then set to nnn.
     fn exec_call(&mut self, nnn: u16) {
-        self.sp += OPCODE_SIZE;
+        self.stack[self.sp as usize] = self.pc + OPCODE_SIZE;
 
-        self.stack[self.sp as usize]     = self.pc & 0xFF;
-        self.stack[self.sp as usize + 1] = self.pc >> 8;
+        self.sp += 1;
 
         self.jump(nnn);
 
@@ -498,6 +510,8 @@ impl Processor {
         let mut rng = rand::thread_rng();
         self.v[x as usize] = rng.gen_range(0, 255) & kk;
 
+        self.increment_pc();
+
         println!("RND rnd -> {:x?}", self.v[x as usize]);
     }
 
@@ -512,26 +526,15 @@ impl Processor {
     /// so part of it is outside the coordinates of the display, it wraps
     /// around to the opposite side of the screen.
     fn exec_drw(&mut self, x: u8, y: u8, n: u8) {
-        let xpos = self.v[x as usize] as usize;
-        let ypos = self.v[y as usize] as usize;
+        self.v[0x0f] = 0;
+        for byte in 0..n {
+            let y = (self.v[y as usize] as usize + byte as usize) % CHIP8_HEIGHT;
+            for bit in 0..8 {
+                let x = (self.v[x as usize] as usize + bit) % CHIP8_WIDTH;
+                let color = (self.memory[self.i as usize + byte as usize] >> (7 - bit)) & 1;
 
-        let mut sprite: Vec<u8> = Vec::new();
-        for i in self.i .. (self.i + n as u16) {
-            sprite.push(self.memory[i as usize]);
-        }
-
-        self.v[0xf] = 0;
-
-        for yline in 0 .. sprite.len() {
-            let pixel = sprite[yline];
-            for xline in 0 .. 8 {
-                if (pixel & (0x80 >> xline)) != 0 {
-                    if self.vram[xpos + xline][ypos + yline] == 1 {
-                        self.v[0xf] = 1;
-                    }
-
-                    self.vram[xpos + xline][ypos + yline] ^= 1;
-                }
+                self.v[0x0f] |= color & self.vram[y][x];
+                self.vram[y][x] ^= color;
             }
         }
 

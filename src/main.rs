@@ -50,6 +50,6 @@ fn main() {
 
         }
 
-        thread::sleep(time::Duration::from_secs(1));
+        thread::sleep(time::Duration::from_millis(2));
     }
 }
