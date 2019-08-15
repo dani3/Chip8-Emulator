@@ -15,10 +15,8 @@ const STACK_SIZE:             usize = 16;
 const KEYPAD_SIZE:            usize = 16;
 const OPCODE_SIZE:              u16 = 2;
 const NUM_REGISTERS:          usize = 16;
-const INTERPRETER_AREA_START: usize = 0x000;
-const INTERPRETER_AREA_END:   usize = 0x1ff;
-const FONT_AREA_START:        usize = 0x050;
-const FONT_AREA_END:          usize = 0x0a0;
+const FONT_AREA_START:        usize = 0x000;
+const FONT_AREA_END:          usize = 0x050;
 const PROGRAM_AREA_START:     usize = 0x200;
 const PROGRAM_AREA_END:       usize = 0xfff;
 
@@ -106,7 +104,10 @@ impl Processor {
 
     pub fn tick(&mut self, keypad: [bool; KEYPAD_SIZE]) -> Result<Output, ()> {
         self.keypad = keypad;
-        self.cpu_flags = 0;
+
+        if (self.cpu_flags & UPDATE_VRAM_BIT) == UPDATE_VRAM_BIT {
+            self.cpu_flags = 0;
+        }
 
         let mut beep_request = false;
 
