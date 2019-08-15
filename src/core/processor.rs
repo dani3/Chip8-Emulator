@@ -1,4 +1,3 @@
-use colored::*;
 use rand::Rng;
 
 use crate::core::CHIP8_HEIGHT;
