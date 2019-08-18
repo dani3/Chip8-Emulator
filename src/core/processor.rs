@@ -151,7 +151,6 @@ impl Processor {
             match nibbles {
                 (0x0,0x0,0xe,0x0) => self.exec_cls(),
                 (0x0,0x0,0xe,0xe) => self.exec_ret(),
-                (0x0,_,_,_)       => self.exec_sys(nnn),
                 (0x1,_,_,_)       => self.exec_jp(nnn),
                 (0x2,_,_,_)       => self.exec_call(nnn),
                 (0x3,_,_,_)       => self.exec_se_vx_byte(x, kk),
@@ -184,7 +183,7 @@ impl Processor {
                 (0xf,_,0x3,0x3)   => self.exec_ld_b_vx(x),
                 (0xf,_,0x5,0x5)   => self.exec_ld_i_vx(x),
                 (0xf,_,0x6,0x5)   => self.exec_ld_vx_i(x),
-                (_,_,_,_)         => ()
+                (_,_,_,_)         => self.increment_pc()
             }
         }
 
@@ -198,8 +197,6 @@ impl Processor {
     /// __00E0 - CLS__
     /// Clear the display.
     fn exec_cls(&mut self) {
-        println!("CLS");
-
         self.vram = [[0x00; CHIP8_WIDTH]; CHIP8_HEIGHT];
 
         self.cpu_flags |= UPDATE_VRAM_BIT;
@@ -217,22 +214,12 @@ impl Processor {
         self.pc = self.stack[self.sp as usize];
     }
 
-    /// __0nnn - SYS addr__
-    /// Jump to a machine code routine at nnn.
-    fn exec_sys(&mut self, nnn: u16) {
-        self.jump(nnn);
-
-        println!("SYS pc -> {:x?}", self.pc);
-    }
-
     /// __1nnn - JP addr__
     /// Jump to location nnn.
     ///
     /// The interpreter sets the program counter to nnn.
     fn exec_jp(&mut self, nnn: u16) {
         self.jump(nnn);
-
-        println!("JP pc -> {:x?}", self.pc);
     }
 
     /// __2nnn - CALL addr__
@@ -246,12 +233,6 @@ impl Processor {
         self.sp += 1;
 
         self.jump(nnn);
-
-        println!("CALL pc -> {:x?} | sp -> {:x?} | stack -> {:x?}{:x?}"
-            , self.pc
-            , self.sp
-            , self.stack[self.sp as usize]
-            , self.stack[(self.sp + 1) as usize]);
     }
 
     /// __3xkk - SE Vx, byte__
@@ -265,8 +246,6 @@ impl Processor {
         } else {
             self.increment_pc();
         }
-
-        println!("SE V{:x?} byte {:x?} == {:x?}", x, kk, self.v[x as usize]);
     }
 
     /// __4xkk - SNE Vx, byte__
@@ -280,8 +259,6 @@ impl Processor {
         } else {
             self.increment_pc();
         }
-
-        println!("SNE V{:x?} byte {:x?} != {:x?}", x, kk, self.v[x as usize]);
     }
 
     /// __5xkk - SE Vx, Vy__
@@ -295,8 +272,6 @@ impl Processor {
         } else {
             self.increment_pc();
         }
-
-        println!("SE V{:x?} byte {:x?} == {:x?}", x, self.v[x as usize], self.v[y as usize]);
     }
 
     /// __6xkk - LD Vx, byte__
@@ -307,8 +282,6 @@ impl Processor {
         self.v[x as usize] = kk;
 
         self.increment_pc();
-
-        println!("LD V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// __7xkk - ADD Vx, byte__
@@ -324,8 +297,6 @@ impl Processor {
         self.v[x as usize] = sum as u8;
 
         self.increment_pc();
-
-        println!("ADD V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// __8xy0 - LD Vx, Vy__
@@ -336,8 +307,6 @@ impl Processor {
         self.v[x as usize] = self.v[y as usize];
 
         self.increment_pc();
-
-        println!("LD V{:x?} -> V{:x?}", y, x);
     }
 
     /// __8xy1 - OR Vx, Vy__
@@ -349,8 +318,6 @@ impl Processor {
         self.v[x as usize] |= self.v[y as usize];
 
         self.increment_pc();
-
-        println!("OR V{:x?} -> V{:x?}", y, x);
     }
 
     /// __8xy2 - AND Vx, Vy__
@@ -362,8 +329,6 @@ impl Processor {
         self.v[x as usize] &= self.v[y as usize];
 
         self.increment_pc();
-
-        println!("AND V{:x?} -> V{:x?}", y, x);
     }
 
     /// __8xy3 - XOR Vx, Vy__
@@ -375,8 +340,6 @@ impl Processor {
         self.v[x as usize] ^= self.v[y as usize];
 
         self.increment_pc();
-
-        println!("XOR V{:x?} -> V{:x?}", y, x);
     }
 
     /// __8xy4 - ADD Vx, Vy__
@@ -397,8 +360,6 @@ impl Processor {
         self.v[x as usize] = sum as u8;
 
         self.increment_pc();
-
-        println!("ADD V{:x?} -> V{:x?} (VF = {:x?})", y, x, self.v[0xf]);
     }
 
     /// __8xy5 - SUB Vx, Vy__
@@ -416,8 +377,6 @@ impl Processor {
         self.v[x as usize] = self.v[x as usize].wrapping_sub(self.v[y as usize]);
 
         self.increment_pc();
-
-        println!("SUB V{:x?} -> V{:x?} (VF = {:x?})", y, x, self.v[0xf]);
     }
 
     /// __8xy6 - SHR Vx {, Vy}__
@@ -431,8 +390,6 @@ impl Processor {
         self.v[x as usize] >>= 1;
 
         self.increment_pc();
-
-        println!("SHR V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// __8xy7 - SUBN Vx, Vy__
@@ -450,8 +407,6 @@ impl Processor {
         self.v[x as usize] = self.v[y as usize].wrapping_sub(self.v[x as usize]);
 
         self.increment_pc();
-
-        println!("SUBN V{:x?} -> V{:x?} (VF = {:x?})", y, x, self.v[0xf]);
     }
 
     /// __8xye - SHL Vx {, Vy}__
@@ -460,13 +415,11 @@ impl Processor {
     /// If the most-significant bit of Vx is 1, then VF is
     /// set to 1, otherwise 0. Then Vx is multiplied by 2.
     fn exec_shl_vx_vy(&mut self, x: u8) {
-        self.v[0xf] = self.v[x as usize] & 0x80;
+        self.v[0xf] = (self.v[x as usize] & 0x80) >> 7;
 
         self.v[x as usize] <<= 1;
 
         self.increment_pc();
-
-        println!("SHL V{:x?} -> {:x?}", x, self.v[x as usize]);
     }
 
     /// __9xy0 - SNE Vx, Vy__
@@ -480,8 +433,6 @@ impl Processor {
         } else {
             self.increment_pc();
         }
-
-        println!("SNE {:x?} != {:x?}", self.v[x as usize], self.v[y as usize]);
     }
 
     /// __annn - LD I, addr__
@@ -492,8 +443,6 @@ impl Processor {
         self.i = nnn;
 
         self.increment_pc();
-
-        println!("LD I -> {:x?}", self.i);
     }
 
     /// __bnnn - JP V0, addr__
@@ -502,8 +451,6 @@ impl Processor {
     /// The program counter is set to nnn plus the value of V0.
     fn exec_jp_v0(&mut self, nnn: u16) {
         self.pc = nnn + self.v[0x0] as u16;
-
-        println!("JP V0 pc -> {:x?}", self.pc);
     }
 
     /// __cxkk - RND Vx, byte__
@@ -516,8 +463,6 @@ impl Processor {
         self.v[x as usize] = rng.gen_range(0, 255) & kk;
 
         self.increment_pc();
-
-        println!("RND rnd -> {:x?}", self.v[x as usize]);
     }
 
     /// __dxyn - DRW Vx, Vy, nibble__
@@ -545,8 +490,6 @@ impl Processor {
 
         self.cpu_flags |= UPDATE_VRAM_BIT;
         self.increment_pc();
-
-        println!("DRW");
     }
 
     /// __ex9e - SKP Vx__
@@ -560,8 +503,6 @@ impl Processor {
         } else {
             self.increment_pc();
         }
-
-        println!("SKP Vx = {:x?} : {}", self.v[x as usize], self.keypad[self.v[x as usize] as usize]);
     }
 
     /// __exa1 - SKNP Vx__
@@ -575,8 +516,6 @@ impl Processor {
         } else {
             self.increment_pc();
         }
-
-        println!("SKNP Vx = {:x?} : {}", self.v[x as usize], self.keypad[self.v[x as usize] as usize]);
     }
 
     /// __fx07 - LD Vx, DT__
@@ -587,8 +526,6 @@ impl Processor {
         self.v[x as usize] = self.delay_timer;
 
         self.increment_pc();
-
-        println!("LD DT = {:x?} -> V{:x?}", self.v[x as usize], x);
     }
 
     /// __fx0a - LD Vx, K__
@@ -601,11 +538,9 @@ impl Processor {
         self.selected_v = x;
 
         self.increment_pc();
-
-        println!("LD V{:x?}, K", x);
     }
 
-    /// __fx14 - LD DT, Vc__
+    /// __fx15 - LD DT, Vc__
     /// Set delay timer = Vx.
     ///
     /// DT is set equal to the value of Vx.
@@ -613,8 +548,6 @@ impl Processor {
         self.delay_timer = self.v[x as usize];
 
         self.increment_pc();
-
-        println!("LD V{:x?} -> DT = {:x?}", x, self.delay_timer);
     }
 
     /// __fx18 - LD ST, Vc__
@@ -625,8 +558,6 @@ impl Processor {
         self.sound_timer = self.v[x as usize];
 
         self.increment_pc();
-
-        println!("LD V{:x?} -> ST = {:x?}", x, self.sound_timer);
     }
 
     /// __fx1e - ADD I, Vx__
@@ -638,8 +569,6 @@ impl Processor {
         self.v[0xf] = if self.i > 0x0F00 { 1 } else { 0 };
 
         self.increment_pc();
-
-        println!("ADD I + V{:x?} -> I = {:x?}", x, self.i);
     }
 
     /// __fx29 - LD F, Vx__
@@ -651,8 +580,6 @@ impl Processor {
         self.i = (self.v[x as usize] as u16) * 5;
 
         self.increment_pc();
-
-        println!("LD F V{:x?} -> I = {:x?}", x, self.i);
     }
 
     /// __fx33 - LD B, Vx__
@@ -673,13 +600,6 @@ impl Processor {
         self.memory[self.i as usize + 2] = ones;
 
         self.increment_pc();
-
-        println!("LD B V{:x?} = {:x?} -> I = [{:x?}, {:x?}, {:x?}]"
-            , x
-            , self.v[x as usize]
-            , self.memory[self.i as usize]
-            , self.memory[self.i as usize + 1]
-            , self.memory[self.i as usize + 2]);
     }
 
     /// __fx55 - LD [I], Vx__
@@ -689,13 +609,11 @@ impl Processor {
     /// Vx into memory, starting at the address in I.
     fn exec_ld_i_vx(&mut self, x: u8) {
         let limit = x as usize;
-        for i in 0 .. limit {
+        for i in 0 ..= limit {
             self.memory[self.i as usize + i] = self.v[i];
         }
 
         self.increment_pc();
-
-        println!("LD I -> V : {:x?}", self.v[limit]);
     }
 
     /// __fx65 - LD Vx, [I]__
@@ -705,13 +623,11 @@ impl Processor {
     /// into registers V0 through Vx.
     fn exec_ld_vx_i(&mut self, x: u8) {
         let limit = x as usize;
-        for i in 0 .. limit {
+        for i in 0 ..= limit {
             self.v[i] = self.memory[self.i as usize + i];
         }
 
         self.increment_pc();
-
-        println!("LD V -> I : {:x?}", self.v[limit]);
     }
 
     /// Return the opcode currently pointed from the program counter.
@@ -723,6 +639,7 @@ impl Processor {
     /// Increment the program counter.
     fn increment_pc(&mut self) {
         self.pc += 2;
+        println!("PC = {:x?}", self.pc);
     }
 
     /// Jump to the specified address.
@@ -732,10 +649,12 @@ impl Processor {
     /// * `addr` - u16 containing the target address.
     fn jump(&mut self, addr: u16) {
         self.pc = addr;
+        println!("PC = {:x?}", self.pc);
     }
 
     /// Skip the next opcode.
     fn skip(&mut self) {
         self.pc += 2 * OPCODE_SIZE;
+        println!("PC = {:x?}", self.pc);
     }
 }
