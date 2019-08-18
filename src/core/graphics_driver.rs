@@ -28,7 +28,7 @@ impl GraphicsDriver {
 
         let mut canvas = window.into_canvas().build().unwrap();
 
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.set_draw_color(Color::RGB(2, 34, 49));
         canvas.clear();
         canvas.present();
 
@@ -55,9 +55,9 @@ impl GraphicsDriver {
 
     fn create_color(&self, is_set: bool) -> Color {
         if is_set {
-            Color::RGB(255, 255, 255)
+            Color::RGB(162, 191, 221)
         } else {
-            Color::RGB(0, 0, 0)
+            Color::RGB(2, 34, 49)
         }
     }
 }
